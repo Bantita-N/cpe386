@@ -1,0 +1,301 @@
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    * {
+      font-family: 'Press Start 2P', cursive;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: black;
+    }
+
+    h1 {
+      margin: 0;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #ddd;
+    }
+  </style>
+</head>
+
+<div style="display: inline-block; position: relative">
+  <div
+    id="overlappingDiv"
+    style="
+      background-color: black;
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 10;
+    "
+  ></div>
+
+  <canvas></canvas>
+  <div
+    id="characterDialogueBox"
+    style="
+      background-color: white;
+      height: 140px;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      border-top: 4px black solid;
+      display: none;
+      padding: 12px;
+    "
+  ></div>
+
+  <div id="userInterface" style="display: none">
+    <!-- Represents health bar of draggle (enemy) -->
+    <div
+      style="
+        background-color: white;
+        width: 250px;
+        position: absolute;
+        top: 50px;
+        left: 50px;
+        border: 4px black solid;
+        padding: 12px;
+      "
+    >
+      <h1 style="font-size: 16px">Draggle</h1>
+      <div style="position: relative">
+        <div
+          style="height: 5px; background-color: #ccc; margin-top: 10px"
+        ></div>
+        <div
+          id="enemyHealthBar"
+          style="
+            height: 5px;
+            background-color: green;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+          "
+        ></div>
+      </div>
+    </div>
+
+    <!-- Represents health bar of emby (us) -->
+    <div
+      style="
+        background-color: white;
+        width: 250px;
+        position: absolute;
+        top: 330px;
+        right: 50px;
+        border: 4px black solid;
+        padding: 12px;
+      "
+    >
+      <h1 style="font-size: 16px">Emby</h1>
+      <div style="position: relative">
+        <div
+          style="height: 5px; background-color: #ccc; margin-top: 10px"
+        ></div>
+        <div
+          id="playerHealthBar"
+          style="
+            height: 5px;
+            background-color: green;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+          "
+        ></div>
+      </div>
+    </div>
+
+    <div
+      style="
+        background-color: white;
+        height: 140px;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        border-top: 4px black solid;
+        display: flex;
+      "
+    >
+      <div
+        id="dialogueBox"
+        style="
+          position: absolute;
+          top: 0;
+          right: 0;
+          bottom: 0;
+          left: 0;
+          background-color: white;
+          padding: 12px;
+          display: none;
+          cursor: pointer;
+        "
+      >
+        sdkfjlsdajl
+      </div>
+      <div
+        id="attacksBox"
+        style="
+          width: 66.66%;
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+        "
+      ></div>
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 33.33%;
+          border-left: 4px black solid;
+        "
+      >
+        <h1 id="attackType" style="font-size: 16px">Attack Type</h1>
+      </div>
+    </div>
+  </div>
+
+  <!-- Puzzle modal -->
+  <div id="puzzleModal" style="display:none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 16px; border: 4px solid black; z-index: 20; width: 520px;">
+    <h2 id="puzzleTitle" style="font-size:14px; margin:0 0 8px 0">ปริศนา</h2>
+    <!-- optional image for visual puzzles -->
+    <img id="puzzleImage" src="" alt="ปริศนา (รูป)" style="display:none; max-width:100%; max-height:180px; margin-bottom:10px; border:4px solid #eee;" />
+    <div id="puzzleQuestion" style="min-height:60px; margin-bottom:12px;">QUESTION</div>
+    <div id="puzzleChoices" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;"></div>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div style="font-size:14px">คะแนนรวม: <span id="playerScore">0</span></div>
+      <div>
+        <button id="puzzleClose">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scoreboard (top-right) -->
+  <div id="scoreBoard" style="position: absolute; top: 12px; right: 12px; z-index: 15; background: white; padding: 8px; border: 4px solid black;">
+    <div style="font-size:12px">คะแนน: <span id="scoreDisplay">0</span></div>
+  </div>
+
+  <!-- Timer (top-left) -->
+  <div id="timerBox" style="position:absolute; top:12px; left:12px; z-index:15; background:white; padding:8px; border:4px solid black;">
+    <div style="font-size:12px">เวลาเหลือ: <span id="timerDisplay">02:00</span></div>
+  </div>
+
+  <!-- Warp modal (pier) -->
+  <div id="warpModal" style="display:none; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: white; padding: 16px; border: 4px solid black; z-index: 40; width: 420px; text-align:center;">
+    <h2 style="margin:0 0 8px 0; font-size:16px">ท่าเรือ</h2>
+    <div id="warpMessage" style="min-height:40px;">ไปด่านใหม่ได้เมื่อคุณแก้ปริศนาทุกหลัง</div>
+    <div style="margin-top:12px; display:flex; justify-content:center; gap:8px;">
+      <button id="warpCancel">ยกเลิก</button>
+      <button id="warpConfirm">วาร์ปไปด่านใหม่</button>
+    </div>
+  </div>
+
+  <!-- Time up overlay -->
+  <div id="timeUpOverlay" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.8); z-index:50; color:white; align-items:center; justify-content:center;">
+    <div style="text-align:center;">
+      <h1 style="font-size:24px">หมดเวลา!</h1>
+      <p>ลองใหม่อีกครั้ง</p>
+      <button id="timeUpRestart">เริ่มใหม่</button>
+    </div>
+  </div>
+
+  <!-- Score popup (fun) -->
+  <div id="scorePopup" style="display:none; position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%); z-index: 30; pointer-events: none;">
+    <div id="scoreCard" style="background:white; padding:20px; border:6px solid black; width:420px; text-align:center;">
+      <h2 id="scoreTitle" style="margin:0; font-size:18px">คะแนนได้รับ!</h2>
+      <div id="scoreGain" style="font-size:28px; margin-top:8px; color:#0652DD;">+10</div>
+      <div id="scoreTotalSmall" style="font-size:14px; margin-top:6px; color:#222">รวม: <span id="scoreTotalInPopup">0</span></div>
+      <div id="scoreBadge" style="margin-top:12px;">
+        <!-- simple badge -->
+        <span id="badgeText" style="display:inline-block; padding:6px 12px; background:gold; border-radius:6px; font-weight:bold;">Great!</span>
+      </div>
+    </div>
+    <!-- floating confetti-ish dots container -->
+    <div id="confettiContainer" style="position:absolute; left:0; right:0; top:-60px; bottom:0; pointer-events:none;"></div>
+  </div>
+
+  <!-- Start screen -->
+  <div id="startScreen" style="
+          position:absolute; inset:0; background:rgba(0,0,0,0.7); 
+          z-index:60; display:flex; align-items:center; justify-content:center;">
+          <div style="/* ใช้รูปภาพเป็นพื้นหลัง ตามที่คุณต้องการ */
+          background-image: url('img/wall/777f4e90abf163a474e5cb31cde7ce51.gif');
+          background-size: cover; 
+          background-repeat: no-repeat;
+          background-position: center; 
+          
+          /* ********* เพิ่มตรงนี้: เปลี่ยนสีข้อความทั้งหมดในกล่องเป็นสีขาว ********* */
+          color: rgb(255, 255, 255); 
+          /* ******************************************************************* */
+          
+          padding:20px; 
+          width:520px; 
+          text-align:center;">
+
+
+      <h1 style="margin:0 0 12px 0; font-size:20px">ยินดีต้อนรับสู่เกมปริศนา</h1>
+      <p style="font-size:13px">เวลา: 2 นาที | ตอบผิดจะโดนหักเวลา 8 วินาที</p>
+      <p style="font-size:13px">เป้าหมายคะแนนที่ต้องได้: <span id="targetScoreDisplay">--</span></p>
+      <div style="margin-top:12px; display:flex; justify-content:center; gap:8px;">
+        <button id="startButton" style="padding:10px 16px;">เริ่มเกม</button>
+        <button id="startPractice" style="padding:10px 16px;">เริ่มแบบฝึก (ไม่จำกัดเวลา)</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"
+  integrity="sha512-6+YN/9o9BWrk6wSfGxQGpt3EUK6XeHi6yeHV+TYD2GR0Sj/cggRpXr1BrAQf0as6XslxomMUxXp2vIl+fv0QRA=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+></script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"
+  integrity="sha512-H6cPm97FAsgIKmlBA4s774vqoN24V5gSQL4yBTDOY2su2DeXZVhQPxFK4P6GPdnZqM9fg1G3cMv5wD7e6cFLZQ=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+></script>
+<!-- Stage 1: expose house tile positions so index.js uses stage-specific mapping -->
+<script>
+  // Stage 1 (ด่าน 1) house tile positions (explicit so stage1/2 are separate)
+  window.STAGE = 1
+  window.HOUSE_TILE_POSITIONS = [
+    { i: 14, j: 45.5 },
+    { i: 18, j: 25.5 },
+    { i: 27, j: 39.5 },
+    { i: 13, j: 20 },
+    { i: 26.5, j: 30 }
+  ]
+</script>
+<!-- <script src="data/audio.js"></script> -->
+<script src="data/battleZones.js"></script>
+<script src="data/collisions.js"></script>
+<script src="data/attacks.js"></script>
+<script src="data/monsters.js"></script>
+<script src="data/characters.js"></script>
+<script src="data/puzzles.js"></script>
+<script src="js/utils.js"></script>
+<script src="classes.js"></script>
+<script src="index.js"></script>
+<script src="battleScene.js"></script>
