@@ -235,6 +235,16 @@
     <div id="confettiContainer" style="position:absolute; left:0; right:0; top:-60px; bottom:0; pointer-events:none;"></div>
   </div>
 
+  <!-- Wrong answer popup -->
+  <div id="wrongPopup" style="display:none; position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%); z-index: 30; pointer-events: none;">
+    <div id="wrongCard" style="background:white; padding:20px; border:6px solid black; width:420px; text-align:center;">
+      <h2 style="margin:0; font-size:18px; color:#e74c3c;">ผิดแล้ว!</h2>
+      <div style="font-size:24px; margin-top:8px; color:#e74c3c;">❌</div>
+      <div style="font-size:14px; margin-top:8px; color:#222">ลองอีกครั้งนะ!</div>
+      <div style="font-size:12px; margin-top:6px; color:#e74c3c;">-8 วินาที</div>
+    </div>
+  </div>
+
   <!-- Start screen -->
   <div id="startScreen" style="
           position:absolute; inset:0; background:rgba(0,0,0,0.7); 

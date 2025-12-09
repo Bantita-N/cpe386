@@ -295,14 +295,11 @@ function openPuzzle(houseIndex) {
       } else {
         // wrong answer: no points, force retry (don't close modal), small time penalty
         try {
-          // show temporary feedback
-          const questionEl = document.querySelector('#puzzleQuestion')
-          const original = questionEl.innerText
-          questionEl.innerText = 'ผิด! ลองอีกครั้ง'
-          setTimeout(() => (questionEl.innerText = original), 800)
           // small time penalty
           timeLeft = Math.max(0, timeLeft - 8)
           document.querySelector('#timerDisplay').innerText = formatTime(timeLeft)
+          // show wrong answer popup
+          showWrongScreen()
           if (audio && audio.tackleHit) audio.tackleHit.play()
         } catch (e) {}
         return
@@ -398,6 +395,35 @@ function showScoreScreen(points) {
     } catch (e) {}
   } catch (e) {
     console.warn('score popup failed', e)
+  }
+}
+
+// Wrong answer screen
+function showWrongScreen() {
+  try {
+    const popup = document.querySelector('#wrongPopup')
+    
+    // show popup
+    popup.style.display = 'block'
+    popup.style.opacity = '0'
+    popup.style.transform = 'translate(-50%,-50%) scale(0.6)'
+
+    gsap.to(popup, { opacity: 1, scale: 1, duration: 0.45, ease: 'back.out(1.7)' })
+
+    // hide popup after a while
+    setTimeout(() => {
+      gsap.to(popup, { 
+        opacity: 0, 
+        scale: 0.6, 
+        duration: 0.35, 
+        onComplete() { 
+          popup.style.display = 'none'
+          popup.style.transform = 'translate(-50%,-50%) scale(0.6)'
+        } 
+      })
+    }, 1400)
+  } catch (e) {
+    console.warn('wrong popup failed', e)
   }
 }
 
