@@ -130,6 +130,7 @@ houseTilePositions.forEach(({ i, j }, idx) => {
 // (movables/renderables will be updated after they are declared)
 
 let puzzleOpen = false
+let puzzleWiggleInterval = null
 
 // initialize solved flags and score now that houseZones exist
 let houseSolved = new Array(houseZones.length).fill(false)
@@ -235,11 +236,43 @@ function openPuzzle(houseIndex) {
   if (puzzleOpen) return
   if (houseSolved[houseIndex]) return
   puzzleOpen = true
+  
   // pick a puzzle based on the persistent mapping (puzzleIndex)
   const mapping = houseTilePositions[houseIndex]
   const puzzleIndex = mapping && typeof mapping.puzzleIndex !== 'undefined' ? mapping.puzzleIndex : houseIndex % puzzles.length
   const puzzle = puzzles[puzzleIndex % puzzles.length]
-  // show image if puzzle provides one (optional)
+  
+  // บันทึก state ปัจจุบัน
+  window.currentPuzzleIndex = puzzleIndex
+  window.currentHouseIndex = houseIndex
+  window.currentPuzzle = puzzle
+  
+  // เลือกเกมตามประเภท
+  const gameType = puzzle.gameType || 'fishing'
+  
+  switch(gameType) {
+    case 'fishing':
+      openFishingGame(puzzle, houseIndex)
+      break
+    case 'wordSearch':
+      openWordSearchGame(puzzle, houseIndex)
+      break
+    case 'matchup':
+      openMatchupGame(puzzle, houseIndex)
+      break
+    case 'hangman':
+      openHangmanGame(puzzle, houseIndex)
+      break
+    case 'multipleChoice':
+    default:
+      openMultipleChoiceGame(puzzle, houseIndex)
+      break
+  }
+}
+
+// ===== เกม 1: Fishing (ตกปลา) =====
+function openFishingGame(puzzle, houseIndex) {
+  document.querySelector('#puzzleQuestion').innerText = puzzle.question || ''
   const puzzleImageEl = document.querySelector('#puzzleImage')
   if (puzzle && puzzle.image) {
     puzzleImageEl.src = puzzle.image
@@ -249,36 +282,53 @@ function openPuzzle(houseIndex) {
     puzzleImageEl.style.display = 'none'
   }
 
-  // show question text (if provided)
-  document.querySelector('#puzzleQuestion').innerText = puzzle.question || ''
   const choicesContainer = document.querySelector('#puzzleChoices')
   choicesContainer.innerHTML = ''
 
   puzzle.choices.forEach((choiceEntry, idx) => {
     const btn = document.createElement('button')
-    btn.style.padding = '8px'
+    btn.style.padding = '10px'
     btn.style.display = 'flex'
     btn.style.alignItems = 'center'
-    btn.style.gap = '8px'
+    btn.style.gap = '10px'
+    btn.style.background = 'linear-gradient(90deg, #b7d8ff, #8ac4ff)'
+    btn.style.border = '3px solid #004e92'
+    btn.style.borderRadius = '10px'
+    btn.style.boxShadow = '0 6px 0 #002d5c'
+    btn.style.cursor = 'pointer'
+    btn.style.transition = 'transform 0.15s ease, box-shadow 0.15s ease'
+    btn.onmouseenter = () => {
+      btn.style.transform = 'translateY(-2px)'
+      btn.style.boxShadow = '0 8px 0 #002d5c'
+    }
+    btn.onmouseleave = () => {
+      btn.style.transform = 'translateY(0)'
+      btn.style.boxShadow = '0 6px 0 #002d5c'
+    }
 
-    // Support two forms for a choice:
-    // 1) string: 'Answer text'
-    // 2) object: { text: 'label', image: './img/...' }
     if (typeof choiceEntry === 'string') {
       btn.innerText = choiceEntry
     } else if (choiceEntry && typeof choiceEntry === 'object') {
+      btn.style.display = 'flex'
+      btn.style.flexDirection = 'column'
+      btn.style.alignItems = 'center'
+      btn.style.justifyContent = 'center'
+      
       if (choiceEntry.image) {
         const img = document.createElement('img')
         img.src = choiceEntry.image
-        img.style.maxWidth = '140px'
-        img.style.maxHeight = '90px'
+        img.style.maxWidth = '100px'
+        img.style.maxHeight = '60px'
         img.style.display = 'block'
         img.style.objectFit = 'contain'
+        img.style.marginBottom = '6px'
         btn.appendChild(img)
       }
       if (choiceEntry.text) {
         const span = document.createElement('span')
         span.innerText = choiceEntry.text
+        span.style.fontSize = '12px'
+        span.style.fontWeight = 'bold'
         btn.appendChild(span)
       }
     }
@@ -290,15 +340,11 @@ function openPuzzle(houseIndex) {
         houseSolved[houseIndex] = true
         document.querySelector('#playerScore').innerText = playerScore
         document.querySelector('#scoreDisplay').innerText = playerScore
-        // show fun score popup / animation
         showScoreScreen(puzzle.points)
       } else {
-        // wrong answer: no points, force retry (don't close modal), small time penalty
         try {
-          // small time penalty
           timeLeft = Math.max(0, timeLeft - 8)
           document.querySelector('#timerDisplay').innerText = formatTime(timeLeft)
-          // show wrong answer popup
           showWrongScreen()
           if (audio && audio.tackleHit) audio.tackleHit.play()
         } catch (e) {}
@@ -310,11 +356,285 @@ function openPuzzle(houseIndex) {
   })
 
   document.querySelector('#puzzleModal').style.display = 'block'
+  if (puzzleWiggleInterval) clearInterval(puzzleWiggleInterval)
+  puzzleWiggleInterval = setInterval(() => {
+    const buttons = choicesContainer.querySelectorAll('button')
+    buttons.forEach((b, i) => {
+      const dx = (Math.random() * 6 - 3).toFixed(1)
+      const dy = (Math.random() * 4 - 2).toFixed(1)
+      b.style.transform = `translate(${dx}px, ${dy}px)`
+      setTimeout(() => {
+        b.style.transform = 'translate(0, 0)'
+      }, 220)
+    })
+  }, 900)
+}
+
+// ===== เกม 2: Word Search (ค้นหาคำ) =====
+function openWordSearchGame(puzzle, houseIndex) {
+  document.querySelector('#wsQuestion').innerText = puzzle.question || ''
+  const wsGrid = document.querySelector('#wsGrid')
+  wsGrid.innerHTML = ''
+  
+  // สร้างตัวเลือก 5 ปุ่ม
+  (puzzle.choices || []).slice(0, 5).forEach((choiceEntry, idx) => {
+    const btn = document.createElement('button')
+    btn.style.padding = '12px 16px'
+    btn.style.background = '#ffb74d'
+    btn.style.border = '3px solid #ff6b6b'
+    btn.style.borderRadius = '8px'
+    btn.style.cursor = 'pointer'
+    btn.style.boxShadow = '0 4px 0 #ff6b6b'
+    btn.style.fontWeight = 'bold'
+    btn.style.transition = 'all 0.15s ease'
+    btn.onmouseenter = () => {
+      btn.style.transform = 'translateY(-2px)'
+      btn.style.boxShadow = '0 6px 0 #ff6b6b'
+    }
+    btn.onmouseleave = () => {
+      btn.style.transform = 'translateY(0)'
+      btn.style.boxShadow = '0 4px 0 #ff6b6b'
+    }
+    
+    btn.innerText = typeof choiceEntry === 'string' ? choiceEntry : (choiceEntry.text || '')
+    btn.onclick = () => {
+      const correct = idx === puzzle.answerIndex
+      if (correct) {
+        playerScore += puzzle.points
+        houseSolved[houseIndex] = true
+        document.querySelector('#playerScore').innerText = playerScore
+        document.querySelector('#scoreDisplay').innerText = playerScore
+        document.querySelector('#wsScore').innerText = playerScore
+        showScoreScreen(puzzle.points)
+        setTimeout(() => closePuzzle(), 1500)
+      } else {
+        try {
+          timeLeft = Math.max(0, timeLeft - 8)
+          document.querySelector('#timerDisplay').innerText = formatTime(timeLeft)
+          showWrongScreen()
+          if (audio && audio.tackleHit) audio.tackleHit.play()
+        } catch (e) {}
+      }
+    }
+    wsGrid.appendChild(btn)
+  })
+  
+  document.querySelector('#wordSearchModal').style.display = 'block'
+}
+
+// ===== เกม 3: Match-up (จับคู่) =====
+function openMatchupGame(puzzle, houseIndex) {
+  document.querySelector('#muQuestion').innerText = puzzle.question || ''
+  const muGrid = document.querySelector('#muGrid')
+  muGrid.innerHTML = ''
+  
+  const choices = puzzle.choices || []
+  const paired = choices.slice(0, 4)
+  
+  paired.forEach((choiceEntry, idx) => {
+    const btn = document.createElement('button')
+    btn.style.padding = '14px'
+    btn.style.background = '#ce93d8'
+    btn.style.border = '3px solid #9c27b0'
+    btn.style.borderRadius = '8px'
+    btn.style.cursor = 'pointer'
+    btn.style.boxShadow = '0 4px 0 #9c27b0'
+    btn.style.fontWeight = 'bold'
+    btn.style.transition = 'all 0.15s ease'
+    btn.style.minHeight = '80px'
+    btn.onmouseenter = () => {
+      btn.style.transform = 'scale(1.05)'
+      btn.style.boxShadow = '0 6px 0 #9c27b0'
+    }
+    btn.onmouseleave = () => {
+      btn.style.transform = 'scale(1)'
+      btn.style.boxShadow = '0 4px 0 #9c27b0'
+    }
+    
+    if (choiceEntry.image) {
+      const img = document.createElement('img')
+      img.src = choiceEntry.image
+      img.style.maxWidth = '100%'
+      img.style.maxHeight = '60px'
+      img.style.display = 'block'
+      btn.appendChild(img)
+    }
+    if (choiceEntry.text) {
+      const span = document.createElement('span')
+      span.innerText = choiceEntry.text
+      span.style.display = 'block'
+      btn.appendChild(span)
+    }
+    
+    btn.onclick = () => {
+      const correct = idx === puzzle.answerIndex
+      if (correct) {
+        playerScore += puzzle.points
+        houseSolved[houseIndex] = true
+        document.querySelector('#playerScore').innerText = playerScore
+        document.querySelector('#scoreDisplay').innerText = playerScore
+        document.querySelector('#muScore').innerText = playerScore
+        showScoreScreen(puzzle.points)
+        setTimeout(() => closePuzzle(), 1500)
+      } else {
+        try {
+          timeLeft = Math.max(0, timeLeft - 8)
+          document.querySelector('#timerDisplay').innerText = formatTime(timeLeft)
+          showWrongScreen()
+          if (audio && audio.tackleHit) audio.tackleHit.play()
+        } catch (e) {}
+      }
+    }
+    muGrid.appendChild(btn)
+  })
+  
+  document.querySelector('#matchupModal').style.display = 'block'
+}
+
+// ===== เกม 4: Hangman (แฮงแมน) =====
+function openHangmanGame(puzzle, houseIndex) {
+  document.querySelector('#hgQuestion').innerText = puzzle.question || ''
+  
+  // แสดงรูปโจทย์ถ้ามี
+  const hgQuestionImage = document.querySelector('#hgQuestionImage')
+  if (puzzle.image) {
+    hgQuestionImage.innerHTML = `<img src="${puzzle.image}" style="max-width:100%; max-height:200px; border:3px solid #e91e63; border-radius:8px;" />`
+  } else {
+    hgQuestionImage.innerHTML = ''
+  }
+  
+  const hgChoices = document.querySelector('#hgChoices')
+  hgChoices.innerHTML = ''
+  
+  const choices = puzzle.choices || []
+  choices.slice(0, 4).forEach((choiceEntry, idx) => {
+    const btn = document.createElement('button')
+    btn.style.padding = '8px 12px'
+    btn.style.background = '#f48fb1'
+    btn.style.border = '3px solid #e91e63'
+    btn.style.borderRadius = '6px'
+    btn.style.cursor = 'pointer'
+    btn.style.boxShadow = '0 3px 0 #e91e63'
+    btn.style.transition = 'all 0.15s ease'
+    btn.onmouseenter = () => {
+      btn.style.transform = 'translateY(-2px)'
+      btn.style.boxShadow = '0 5px 0 #e91e63'
+    }
+    btn.onmouseleave = () => {
+      btn.style.transform = 'translateY(0)'
+      btn.style.boxShadow = '0 3px 0 #e91e63'
+    }
+    
+    btn.innerText = typeof choiceEntry === 'string' ? choiceEntry : choiceEntry.text
+    btn.onclick = () => {
+      const correct = idx === puzzle.answerIndex
+      if (correct) {
+        playerScore += puzzle.points
+        houseSolved[houseIndex] = true
+        document.querySelector('#playerScore').innerText = playerScore
+        document.querySelector('#scoreDisplay').innerText = playerScore
+        document.querySelector('#hgScore').innerText = playerScore
+        document.querySelector('#hgDisplay').innerText = '✓✓✓✓'
+        showScoreScreen(puzzle.points)
+        setTimeout(() => closePuzzle(), 1500)
+      } else {
+        try {
+          timeLeft = Math.max(0, timeLeft - 8)
+          document.querySelector('#timerDisplay').innerText = formatTime(timeLeft)
+          showWrongScreen()
+          if (audio && audio.tackleHit) audio.tackleHit.play()
+        } catch (e) {}
+      }
+    }
+    hgChoices.appendChild(btn)
+  })
+  
+  document.querySelector('#hangmanModal').style.display = 'block'
+}
+
+// ===== เกม 5: Multiple Choice (ปกติ) =====
+function openMultipleChoiceGame(puzzle, houseIndex) {
+  document.querySelector('#mcQuestion').innerText = puzzle.question || ''
+  
+  // แสดงรูปโจทย์ถ้ามี
+  const mcQuestionImage = document.querySelector('#mcQuestionImage')
+  if (puzzle.image) {
+    mcQuestionImage.innerHTML = `<img src="${puzzle.image}" style="max-width:100%; max-height:200px; border:3px solid #2196f3; border-radius:8px;" />`
+  } else {
+    mcQuestionImage.innerHTML = ''
+  }
+  
+  const mcChoices = document.querySelector('#mcChoices')
+  mcChoices.innerHTML = ''
+  
+  puzzle.choices.forEach((choiceEntry, idx) => {
+    const btn = document.createElement('button')
+    btn.style.padding = '10px'
+    btn.style.background = '#64b5f6'
+    btn.style.border = '3px solid #2196f3'
+    btn.style.borderRadius = '8px'
+    btn.style.cursor = 'pointer'
+    btn.style.boxShadow = '0 4px 0 #1565c0'
+    btn.style.color = '#000'
+    btn.style.transition = 'all 0.15s ease'
+    btn.onmouseenter = () => {
+      btn.style.transform = 'translateY(-2px)'
+      btn.style.boxShadow = '0 6px 0 #1565c0'
+    }
+    btn.onmouseleave = () => {
+      btn.style.transform = 'translateY(0)'
+      btn.style.boxShadow = '0 4px 0 #1565c0'
+    }
+    
+    if (typeof choiceEntry === 'string') {
+      btn.innerText = choiceEntry
+    } else if (choiceEntry && typeof choiceEntry === 'object') {
+      // ถ้ามีรูป ให้แสดงรูป
+      if (choiceEntry.image) {
+        btn.innerHTML = `<img src="${choiceEntry.image}" style="max-width:120px; max-height:120px; display:block; border-radius:4px;" />`
+        btn.style.padding = '5px'
+      } else if (choiceEntry.text) {
+        btn.innerText = choiceEntry.text
+      }
+    }
+    
+    btn.onclick = () => {
+      const correct = idx === puzzle.answerIndex
+      if (correct) {
+        playerScore += puzzle.points
+        houseSolved[houseIndex] = true
+        document.querySelector('#playerScore').innerText = playerScore
+        document.querySelector('#scoreDisplay').innerText = playerScore
+        document.querySelector('#mcScore').innerText = playerScore
+        showScoreScreen(puzzle.points)
+        setTimeout(() => closePuzzle(), 1500)
+      } else {
+        try {
+          timeLeft = Math.max(0, timeLeft - 8)
+          document.querySelector('#timerDisplay').innerText = formatTime(timeLeft)
+          showWrongScreen()
+          if (audio && audio.tackleHit) audio.tackleHit.play()
+        } catch (e) {}
+      }
+    }
+    mcChoices.appendChild(btn)
+  })
+  
+  document.querySelector('#multipleChoiceModal').style.display = 'block'
 }
 
 function closePuzzle() {
   puzzleOpen = false
+  if (puzzleWiggleInterval) {
+    clearInterval(puzzleWiggleInterval)
+    puzzleWiggleInterval = null
+  }
+  // ปิด modal ทั้งหมด
   document.querySelector('#puzzleModal').style.display = 'none'
+  document.querySelector('#wordSearchModal').style.display = 'none'
+  document.querySelector('#matchupModal').style.display = 'none'
+  document.querySelector('#hangmanModal').style.display = 'none'
+  document.querySelector('#multipleChoiceModal').style.display = 'none'
 }
 
 // Fun score screen with GSAP and confetti dots
@@ -427,7 +747,24 @@ function showWrongScreen() {
   }
 }
 
+// ผูกปุ่มปิดสำหรับทุกเกม
 document.querySelector('#puzzleClose').addEventListener('click', () => {
+  closePuzzle()
+})
+
+document.querySelector('#wsClose').addEventListener('click', () => {
+  closePuzzle()
+})
+
+document.querySelector('#muClose').addEventListener('click', () => {
+  closePuzzle()
+})
+
+document.querySelector('#hgClose').addEventListener('click', () => {
+  closePuzzle()
+})
+
+document.querySelector('#mcClose').addEventListener('click', () => {
   closePuzzle()
 })
 
