@@ -22,14 +22,10 @@ game-1/
 │
 ├── JavaScript Files
 ├── index.js                # ไฟล์หลักของเกม
-├── battleScene.js          # ระบบสู้รบ
 ├── classes.js              # คลาส (Class) สำหรับตัวละคร
 │
 ├── data/                   # ข้อมูลเกม
 │   ├── characters.js       # ข้อมูลตัวละคร
-│   ├── monsters.js         # ข้อมูลมอนสเตอร์
-│   ├── attacks.js          # ระบบการโจมตี
-│   ├── battleZones.js      # เขตสู้รบ
 │   ├── collisions.js       # ข้อมูลการชน
 │   └──  puzzles.js          # ข้อมูลไขปริศนา
 │
@@ -44,7 +40,6 @@ game-1/
 │   ├── Quiz/
 │   └── wall/
 │
-├── audio/                  # ไฟล์เสียง
 ├── js/
 │   └── utils.js            # ฟังก์ชันอรรถประโยชน์
 │
