@@ -144,6 +144,41 @@
     .stats-item {
       margin: 8px 0;
     }
+    .guide-box {
+      background: rgba(0, 212, 255, 0.08);
+      border: 2px solid #00d4ff;
+      padding: 18px;
+      border-radius: 10px;
+      margin: 30px 0;
+      text-align: left;
+      color: #d0d0d0;
+    }
+    .guide-title {
+      color: #ffd700;
+      font-size: 18px;
+      margin: 0 0 12px 0;
+      text-shadow: 1px 1px 0 #000;
+    }
+    .guide-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      line-height: 1.7;
+      font-size: 12px;
+    }
+    .guide-list li {
+      margin-bottom: 6px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: #00d4ff;
+      color: #000;
+      border: 2px solid #0f3460;
+      font-size: 10px;
+      margin-right: 8px;
+    }
     .footer {
       color: #888;
       font-size: 10px;
@@ -157,7 +192,7 @@
 <body>
   <div class="main-container">
     <div class="logo"></div>
-    <h1>Python Quiz</h1>
+    <h1>Python Voyage</h1>
     <p class="subtitle">เรียนรู้ Python ผ่านเกมสนุกๆ</p>
 
     <div class="menu-grid">
@@ -176,10 +211,16 @@
 
     <div class="stage-menu">
       <h2>🎯 เลือกด่าน</h2>
-      <div class="stats">
-        <div class="stats-item">⏱️ เวลา: 2 นาที</div>
-        <div class="stats-item">❌ ตอบผิด: หักเวลา 8 วินาที</div>
-        <div class="stats-item">⭐ ต้องได้: 40 คะแนน</div>
+      <div class="guide-box">
+        <h3 class="guide-title">🕹️ วิธีเล่น & กติกา</h3>
+        <ul class="guide-list">
+          <li><span class="badge">W A S D</span>เดินขึ้น / ซ้าย / ลง / ขวา</li>
+          <li><span class="badge">Space</span>คุยกับตัวละคร / เข้าเล่นปริศนา</li>
+          <li><span class="badge">ESC</span>ปิดหน้าต่างปริศนา</li>
+          <li><span class="badge">⏱️ เวลา</span>เริ่มต้น 2 นาที ตอบผิดหักเวลา 8 วินาที</li>
+          <li><span class="badge">⭐ คะแนน</span>ต้องได้ 50 คะแนนเพื่อผ่านด่าน</li>
+          <li><span class="badge">ด่าน</span>ผ่านครบทุกข้อแล้วจะวาร์ปไปด่านถัดไปได้</li>
+        </ul>
       </div>
       <div class="stage-buttons">
         <a href="index.html" class="stage-btn">ด่าน 1<br>Flowchart</a>
